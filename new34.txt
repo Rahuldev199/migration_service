@@ -1,0 +1,210 @@
+package onevz.cxp.payload.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import onevz.cxp.dbconnector.domain.DailyAnalysisOutput;
+import onevz.cxp.payload.dao.DailyAnalysisDao;
+import onevz.cxp.payload.model.DailyAnalysisReport.ApiCompare;
+import onevz.cxp.payload.model.DailyAnalysisReport.DataCompare;
+import onevz.cxp.payload.model.DailyAnalysisReport.DataSync;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class DailyAnalysisServiceImpl implements DailyAnalysisService {
+
+    @Autowired
+    private DailyAnalysisDao dao;
+    private Mono<List<DailyAnalysisOutput>> report;
+
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    public static final String DAILY_ANALYSIS_DATA_SYNC = "SELECT * FROM (SELECT TYPE_DEF_NAME,TRANSACTION_STATUS \n" +
+            "FROM DATA_SYNC_RESULT \n" +
+            "WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code)\n" +
+            "AND TRUNC(TRANSACTION_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD'))\n" +
+            "pivot ( COUNT(TRANSACTION_STATUS) FOR TRANSACTION_STATUS IN ('SUCCESS' SUCCESS,'FAILURE' FAILURE, 'In-Processing' IN_PROCESSING))\n" +
+            "ORDER BY TYPE_DEF_NAME";
+
+    public static final String DAILY_ANALYSIS_DATA_COMPARE="SELECT * FROM ( SELECT MILESTONES, COMPARISON_STATUS\n" +
+            "FROM DATA_COMPARISON_RESULT \n" +
+            "WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code)\n" +
+            "AND TRUNC(COMPARISON_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD'))\n" +
+            "PIVOT ( COUNT(COMPARISON_STATUS) FOR COMPARISON_STATUS IN ('SUCCESS' SUCCESS,'FAILURE' FAILURE))";
+
+    public static final String DAILY_ANALYSIS_API_COMPARE="SELECT * FROM ( SELECT API_TYPE, COMAPRISON_STATUS FROM API_PAYLOAD_COMP_RSLTS WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code) AND TRUNC(VZWDB_CREATE_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD')) PIVOT ( COUNT(COMAPRISON_STATUS) FOR COMAPRISON_STATUS IN ('SUCCESS' SUCCESS,'FAILED' FAILED))";
+
+    @Override
+    public Mono<List<DataSync>> executeDataSync(String type,List<String> ord5g, List<String> loc5g) {
+        Mono<List<DataSync>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_DATA_SYNC,ord5g, loc5g).map(items->{
+            ArrayList<DataSync> convertValues=(ArrayList<DataSync>)items.stream().map(itm->{
+                DataSync data=null;
+                try{
+//                    String json=mapper.writeValueAsString()
+                    data=mapper.readValue(itm,DataSync.class);
+                    data.setFlow_Type(type);
+                } catch (JsonMappingException e) {
+                    throw new RuntimeException(e);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                return data;
+            }).collect(Collectors.toList());
+            return convertValues;
+        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####DataSync5g"+itm);
+//            System.out.println();
+//        }).subscribe();
+        return ds;
+    }
+
+    @Override
+    public  Mono<List<DataCompare>> executeDataCompare(String type,List<String> ord5g, List<String> loc5g) {
+        Mono<List<DataCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_DATA_COMPARE,ord5g,loc5g).map(itms->{
+            ArrayList<DataCompare> convertValues=(ArrayList<DataCompare>)itms.stream().map(itm->{
+                DataCompare data=null;
+                try{
+                    data=mapper.readValue(itm,DataCompare.class);
+                    data.setFlow_Type(type);
+                } catch (JsonMappingException e) {
+                    throw new RuntimeException(e);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                return data;
+            }).collect(Collectors.toList());
+            return convertValues;
+        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####DataCompare"+itm);
+//            System.out.println();
+//        }).subscribe();
+        return ds;
+    }
+
+    @Override
+    public Mono<List<ApiCompare>> executeApiCompare(String type, List<String> ord5g, List<String> loc5g) {
+        Mono<List<ApiCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_API_COMPARE,ord5g,loc5g).map(itms->{
+            ArrayList<ApiCompare> convertValues=(ArrayList<ApiCompare>)itms.stream().map(itm->{
+                ApiCompare data=null;
+                try{
+                    data=mapper.readValue(itm,ApiCompare.class);
+                    data.setFlow_Type(type);
+                } catch (JsonMappingException e) {
+                    throw new RuntimeException(e);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                return data;
+            }).collect(Collectors.toList());
+            return convertValues;
+        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####ApiCompare"+itm);
+//            System.out.println();
+//        }).subscribe();
+        return ds;
+    }
+
+
+
+//    @Override
+//    public Mono<List<DataCompare>> executeApiCompare(String type,List<String> ordtradein, List<String> loctradein) {
+//        Mono<List<DataCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_DATA_COMPARE,ordtradein,loctradein).map(itms->{
+//            ArrayList<DataCompare> convertValues=(ArrayList<DataCompare>)itms.stream().map(itm->{
+//                DataCompare data=null;
+//                try{
+//                    data=mapper.readValue(itm,DataCompare.class);
+//                    data.setFlow_Type("TradeIn");
+//                } catch (JsonMappingException e) {
+//                    throw new RuntimeException(e);
+//                } catch (JsonProcessingException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                return data;
+//            }).collect(Collectors.toList());
+//            return convertValues;
+//        });
+//        return ds;
+//
+//    }
+
+//    @Override
+//    public Mono<List<DataSync>> executeApiCompare(String type,List<String> ordtradein, List<String> loctradein) {
+//        Mono<List<DataSync>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_DATA_SYNC,ordtradein,loctradein).map(itms->{
+//            ArrayList<DataSync> convertValues=(ArrayList<DataSync>)itms.stream().map(itm->{
+//                DataSync data=null;
+//                try{
+//                    data=mapper.readValue(itm,DataSync.class);
+//                    data.setFlow_Type("TradeIn");
+//                } catch (JsonMappingException e) {
+//                    throw new RuntimeException(e);
+//                } catch (JsonProcessingException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                return data;
+//            }).collect(Collectors.toList());
+//            return convertValues;
+//        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####DataSyncTradein"+itm);
+//        }).subscribe();
+//        return ds;
+//    }
+//
+//    @Override
+//    public Mono<List<ApiCompare>> getApiCompare5g(List<String> ord5g, List<String> loc5g)
+//    {
+//        Mono<List<ApiCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_API_COMPARE,ord5g,loc5g).map(itms->{
+//            ArrayList<ApiCompare> convertValues=(ArrayList<ApiCompare>)itms.stream().map(itm->{
+//                ApiCompare data=null;
+//                try{
+//                    data=mapper.readValue(itm,ApiCompare.class);
+//                    data.setFlow_Type("TradeIn");
+//                } catch (JsonMappingException e) {
+//                    throw new RuntimeException(e);
+//                } catch (JsonProcessingException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                return data;
+//            }).collect(Collectors.toList());
+//            return convertValues;
+//        });
+//        return ds;
+//    }
+//
+//    @Override
+//    public Mono<List<ApiCompare>> getApiCompareTradeIn(List<String> ordtradein, List<String> loctradein) {
+//
+//        Mono<List<ApiCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_API_COMPARE,ordtradein,loctradein).map(itms->{
+//            ArrayList<ApiCompare> convertValues=(ArrayList<ApiCompare>)itms.stream().map(itm->{
+//                ApiCompare data=null;
+//                try{
+//                    data=mapper.readValue(itm,ApiCompare.class);
+//                    data.setFlow_Type("TradeIn");
+//                } catch (JsonMappingException e) {
+//                    throw new RuntimeException(e);
+//                } catch (JsonProcessingException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                return data;
+//            }).collect(Collectors.toList());
+//            return convertValues;
+//        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####ApicompareTradein"+itm);
+//        }).subscribe();
+//        return ds;
+//
+//    }
+
+
+}
