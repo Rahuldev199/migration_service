@@ -1,0 +1,263 @@
+convertToJson
+
+package onevz.cxp.payload.service.helperofdailyanalysis;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import onevz.cxp.core.model.CXPResponse;
+import onevz.cxp.payload.model.DailyAnalysisReport.*;
+import onevz.cxp.payload.service.DailyAnalysisServiceImpl;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+public class ConvertToJson {
+
+    @Autowired
+    DailyAnalysisServiceImpl dasl;
+
+//    public List<String> values(){
+//
+//    }
+//    List<String> data = users.stream()
+//            .map(User::getAdress)
+//            .collect(Collectors.toList());
+
+    public Mono<CXPResponse<HelperToConvertToJson>> dataConversionToJson(DailyAnalysisInput dai) {
+
+        ArrayList<OrderFlow> orderFlow = dai.getOrderFlow();
+        HelperToConvertToJson json=new HelperToConvertToJson();
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> query= Arrays.asList("datasync","datacompare","apicompare");
+        List<DataSync> dataSync=new ArrayList<>();
+        List<DataCompare> datacompare=new ArrayList<>();
+        List<ApiCompare> apicompare=new ArrayList<>();
+
+   //Mono<List<DataCompare>> datacompare;
+        Flux.fromIterable(query).flatMap(x->{
+            if(x.equalsIgnoreCase("datasync")) {
+                System.out.println("####hi######");
+                for (OrderFlow of : orderFlow) {
+                    System.out.println("####hi i am inside of datasync######");
+                     dasl.executeDataSync(of.getType(), of.getOrderlist(), of.getLocationlist()).subscribe();
+                }
+            }
+            else if(x.equalsIgnoreCase("datacompare")){
+                System.out.println("####hi######");
+                for (OrderFlow of : orderFlow) {
+                    System.out.println("####hi i am inside of dataCompare######");
+                    dasl.executeDataCompare(of.getType(), of.getOrderlist(), of.getLocationlist()).subscribe(item->{
+                        List<DataCompare> test = item.stream().collect(Collectors.toList());
+                        datacompare.addAll(test);
+                    });
+                }
+            }
+            else {
+                System.out.println("####hi######");
+                for (OrderFlow of : orderFlow) {
+                    System.out.println("####hi i am inside of apiCompare######");
+                    dasl.executeApiCompare(of.getType(), of.getOrderlist(), of.getLocationlist()).subscribe(
+                            item->{
+                                List<ApiCompare> test = item.stream().collect(Collectors.toList());
+                                apicompare.addAll(test);
+                            }
+                    );
+                }
+            }
+            return null;
+        });
+
+
+//        Mono<List<DataSync>> ds5g = dasl.executeDataSync(orderFlow.get(0).getType(), orderFlow.get(0).getOrderlist(), orderFlow.get(0).getLocationlist());
+//        Mono<List<DataSync>> dsti = dasl.executeDataSync(orderFlow.get(1).getType(), orderFlow.get(1).getOrderlist(), orderFlow.get(1).getLocationlist());
+//        Mono<List<DataCompare>> dc5g = dasl.executeDataCompare(orderFlow.get(0).getType(), orderFlow.get(0).getOrderlist(), orderFlow.get(0).getLocationlist());
+//        Mono<List<DataCompare>> dcti = dasl.executeDataCompare(orderFlow.get(1).getType(), orderFlow.get(1).getOrderlist(), orderFlow.get(1).getLocationlist());
+//        Mono<List<ApiCompare>> ac5g = dasl.executeApiCompare(orderFlow.get(0).getType(), orderFlow.get(0).getOrderlist(), orderFlow.get(0).getLocationlist());
+//        Mono<List<ApiCompare>> acti = dasl.executeApiCompare(orderFlow.get(1).getType(), orderFlow.get(1).getOrderlist(), orderFlow.get(1).getLocationlist());
+//        Mono<List<DataSync>> datasync = Flux.merge(ds5g.flatMapMany(Flux::fromIterable), dsti.flatMapMany(Flux::fromIterable)).collectList();
+//        Mono<List<DataCompare>> dataCompare=Flux.merge(dc5g.flatMapMany(Flux::fromIterable), dcti.flatMapMany(Flux::fromIterable)).collectList();
+//        Mono<List<ApiCompare>> apiCompare=Flux.merge(ac5g.flatMapMany(Flux::fromIterable), acti.flatMapMany(Flux::fromIterable)).collectList();
+
+        Mono<List<DataSync>> datasync=Mono.just(dataSync);
+        Mono<List<DataCompare>> dataCompare=Mono.just(datacompare);
+        Mono<List<ApiCompare>> apiCompare=Mono.just(apicompare);
+        return Mono.zip(datasync,dataCompare,apiCompare).flatMap(Tuple ->{
+            List<DataSync> var1 = Tuple.getT1();
+            List<DataCompare> var2 =Tuple.getT2();
+            List<ApiCompare> var3=Tuple.getT3();
+            json.setApiCompare(var3);
+
+            json.setDataCompare(var2);
+
+            json.setDataSync(var1);
+//            String response;
+//            try {
+//                response = mapper.writeValueAsString(json);
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
+//
+            CXPResponse<HelperToConvertToJson> res=new CXPResponse<>();
+            res.setData(json);
+            JSONObject jsonObject=new JSONObject(res);
+            return Mono.just(res);
+        });
+    }
+
+//    public CXPResponse<Mono<String>> convertToJson(){
+//
+//
+//    }
+}
+
+
+
+
+ServiceImpl
+
+package onevz.cxp.payload.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import onevz.cxp.dbconnector.domain.DailyAnalysisOutput;
+import onevz.cxp.payload.dao.DailyAnalysisDao;
+import onevz.cxp.payload.model.DailyAnalysisReport.ApiCompare;
+import onevz.cxp.payload.model.DailyAnalysisReport.DataCompare;
+import onevz.cxp.payload.model.DailyAnalysisReport.DataSync;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class DailyAnalysisServiceImpl implements DailyAnalysisService {
+
+    @Autowired
+    private DailyAnalysisDao dao;
+    private Mono<List<DailyAnalysisOutput>> report;
+
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    public static final String DAILY_ANALYSIS_DATA_SYNC = "SELECT * FROM (SELECT TYPE_DEF_NAME,TRANSACTION_STATUS \n" +
+            "FROM DATA_SYNC_RESULT \n" +
+            "WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code)\n" +
+            "AND TRUNC(TRANSACTION_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD'))\n" +
+            "pivot ( COUNT(TRANSACTION_STATUS) FOR TRANSACTION_STATUS IN ('SUCCESS' SUCCESS,'FAILURE' FAILURE, 'In-Processing' IN_PROCESSING))\n" +
+            "ORDER BY TYPE_DEF_NAME";
+
+    public static final String DAILY_ANALYSIS_DATA_COMPARE="SELECT * FROM ( SELECT MILESTONES, COMPARISON_STATUS\n" +
+            "FROM DATA_COMPARISON_RESULT \n" +
+            "WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code)\n" +
+            "AND TRUNC(COMPARISON_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD'))\n" +
+            "PIVOT ( COUNT(COMPARISON_STATUS) FOR COMPARISON_STATUS IN ('SUCCESS' SUCCESS,'FAILURE' FAILURE))";
+
+    public static final String DAILY_ANALYSIS_API_COMPARE="SELECT * FROM ( SELECT API_TYPE, COMAPRISON_STATUS FROM API_PAYLOAD_COMP_RSLTS WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code) AND TRUNC(VZWDB_CREATE_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD')) PIVOT ( COUNT(COMAPRISON_STATUS) FOR COMAPRISON_STATUS IN ('SUCCESS' SUCCESS,'FAILED' FAILED))";
+
+    @Override
+    public Mono<List<DataSync>> executeDataSync(String type,List<String> ord5g, List<String> loc5g) {
+        Mono<List<DataSync>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_DATA_SYNC,ord5g, loc5g).map(items->{
+            ArrayList<DataSync> convertValues=(ArrayList<DataSync>)items.stream().map(itm->{
+                DataSync data=null;
+                try{
+//                    String json=mapper.writeValueAsString()
+                    data=mapper.readValue(itm,DataSync.class);
+                    data.setFlow_Type(type);
+                } catch (JsonMappingException e) {
+                    throw new RuntimeException(e);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                return data;
+            }).collect(Collectors.toList());
+            return convertValues;
+        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####DataSync5g"+itm);
+//            System.out.println();
+//        }).subscribe();
+        return ds;
+    }
+
+    @Override
+    public  Mono<List<DataCompare>> executeDataCompare(String type,List<String> ord5g, List<String> loc5g) {
+        Mono<List<DataCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_DATA_COMPARE,ord5g,loc5g).map(itms->{
+            ArrayList<DataCompare> convertValues=(ArrayList<DataCompare>)itms.stream().map(itm->{
+                DataCompare data=null;
+                try{
+                    data=mapper.readValue(itm,DataCompare.class);
+                    data.setFlow_Type(type);
+                } catch (JsonMappingException e) {
+                    throw new RuntimeException(e);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                return data;
+            }).collect(Collectors.toList());
+            return convertValues;
+        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####DataCompare"+itm);
+//            System.out.println();
+//        }).subscribe();
+        return ds;
+    }
+
+    @Override
+    public Mono<List<ApiCompare>> executeApiCompare(String type, List<String> ord5g, List<String> loc5g) {
+        Mono<List<ApiCompare>> ds=dao.getDataSync5gReport(DAILY_ANALYSIS_API_COMPARE,ord5g,loc5g).map(itms->{
+            ArrayList<ApiCompare> convertValues=(ArrayList<ApiCompare>)itms.stream().map(itm->{
+                ApiCompare data=null;
+                try{
+                    data=mapper.readValue(itm,ApiCompare.class);
+                    data.setFlow_Type(type);
+                } catch (JsonMappingException e) {
+                    throw new RuntimeException(e);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                return data;
+            }).collect(Collectors.toList());
+            return convertValues;
+        });
+//        ds.doOnNext(itm->{
+//            System.out.println("#####ApiCompare"+itm);
+//            System.out.println();
+//        }).subscribe();
+        return ds;
+    }
+
+
+
+
+
+
+}
+
+
+
+
+DaoLayer
+ public Mono<List<String>> getDataSync5gReport(String Query,List<String> ord, List<String> loc) {
+        Map<String, Object> namedParams = new HashMap<>();
+        namedParams.put("ord_no", ord);
+        namedParams.put("loc_code", loc);
+        return queryService.executeNamedAsync(Query, namedParams, new ReactiveJdbcTemplate(jt));
+
+    }
+	
+	
+	
+	
+
