@@ -262,3 +262,44 @@ Response:
         ]
     }
 }
+
+
+public Mono<CXPResponse<HelperToConvertToJson>> dataConversionToJson(DailyAnalysisInput dai) {
+
+        ArrayList<OrderFlow> orderFlow = dai.getOrderFlow();
+        HelperToConvertToJson json=new HelperToConvertToJson();
+        ObjectMapper mapper = new ObjectMapper();
+
+
+        Mono<List<DataSync>> ds5g = dasl.executeDataSync(orderFlow.get(0).getType(), orderFlow.get(0).getOrderlist(), orderFlow.get(0).getLocationlist());
+        Mono<List<DataSync>> dsti = dasl.executeDataSync(orderFlow.get(1).getType(), orderFlow.get(1).getOrderlist(), orderFlow.get(1).getLocationlist());
+        Mono<List<DataCompare>> dc5g = dasl.executeDataCompare(orderFlow.get(0).getType(), orderFlow.get(0).getOrderlist(), orderFlow.get(0).getLocationlist());
+        Mono<List<DataCompare>> dcti = dasl.executeDataCompare(orderFlow.get(1).getType(), orderFlow.get(1).getOrderlist(), orderFlow.get(1).getLocationlist());
+        Mono<List<ApiCompare>> ac5g = dasl.executeApiCompare(orderFlow.get(0).getType(), orderFlow.get(0).getOrderlist(), orderFlow.get(0).getLocationlist());
+        Mono<List<ApiCompare>> acti = dasl.executeApiCompare(orderFlow.get(1).getType(), orderFlow.get(1).getOrderlist(), orderFlow.get(1).getLocationlist());
+        Mono<List<DataSync>> dataSync = Flux.merge(ds5g.flatMapMany(Flux::fromIterable), dsti.flatMapMany(Flux::fromIterable)).collectList();
+        Mono<List<DataCompare>> dataCompare=Flux.merge(dc5g.flatMapMany(Flux::fromIterable), dcti.flatMapMany(Flux::fromIterable)).collectList();
+        Mono<List<ApiCompare>> apiCompare=Flux.merge(ac5g.flatMapMany(Flux::fromIterable), acti.flatMapMany(Flux::fromIterable)).collectList();
+
+        return Mono.zip(dataSync,dataCompare,apiCompare).flatMap(Tuple ->{
+            List<DataSync> var1 = Tuple.getT1();
+            List<DataCompare> var2 =Tuple.getT2();
+            List<ApiCompare> var3=Tuple.getT3();
+            json.setApiCompare(var3);
+
+            json.setDataCompare(var2);
+
+            json.setDataSync(var1);
+//            String response;
+//            try {
+//                response = mapper.writeValueAsString(json);
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
+//
+            CXPResponse<HelperToConvertToJson> res=new CXPResponse<>();
+            res.setData(json);
+            JSONObject jsonObject=new JSONObject(res);
+            return Mono.just(res);
+        });
+    }
