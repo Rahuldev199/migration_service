@@ -1,0 +1,175 @@
+package com.vob.webflux.webfilter.controller;
+
+
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import reactor.core.publisher.Mono;
+
+@Service
+public class OrderService {
+    @Autowired
+    UserRepository userRepository;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
+
+    /**
+     * Method to get the order details based on the JSON array details.
+     *
+     * @param listOfFlow
+     * @return
+     * @throws JSONException
+     * @throws JsonProcessingException
+     * @throws Exception
+     */
+    public Mono<Map<String, List<String>>> getOrder(List<OrderFlow> listOfFlow) throws  JsonProcessingException, Exception {
+        Map<String, List<String>> resultMap = new HashMap<>();
+        List<CompletableFuture<Map<String, List<String>>>> futureRequests =
+                listOfFlow.parallelStream().filter(x -> x != null)
+                        .map(x -> CompletableFuture.supplyAsync(() -> {
+                            String typeId = x.getType();
+                            Map<String, List<String>> resultMap1 = new HashMap<>();
+                            try {
+                                resultMap1 = userRepository.getResults1(typeId, x.getLocationlist(), x.getOrderlist());
+
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                            return resultMap1;
+                        }, executorService)).collect(Collectors.toList());
+
+        futureRequests.stream()
+                .map(CompletableFuture::join).flatMap(s -> s.entrySet().stream()).forEach(e -> {
+                    resultMap.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).addAll(e.getValue());
+                });
+        return Mono.just(resultMap);
+    }
+
+}
+
+
+
+===================================
+package com.vob.webflux.webfilter.controller;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.stereotype.Repository;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import reactor.core.publisher.Mono;
+
+@Repository
+public class UserRepository {
+
+	Map<String, String> queryMap = new LinkedHashMap<>();
+	public static final String DAILY_ANALYSIS_DATA_SYNC = "SELECT * FROM (SELECT TYPE_DEF_NAME,TRANSACTION_STATUS \n"
+			+ "FROM DATA_SYNC_RESULT \n" + "WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code)\n"
+			+ "AND TRUNC(TRANSACTION_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD'))\n"
+			+ "pivot ( COUNT(TRANSACTION_STATUS) FOR TRANSACTION_STATUS IN ('SUCCESS' SUCCESS,'FAILURE' FAILURE, 'In-Processing' IN_PROCESSING))\n"
+			+ "ORDER BY TYPE_DEF_NAME";
+
+	public static final String DAILY_ANALYSIS_DATA_COMPARE = "SELECT * FROM ( SELECT MILESTONES, COMPARISON_STATUS\n"
+			+ "FROM DATA_COMPARISON_RESULT \n" + "WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code)\n"
+			+ "AND TRUNC(COMPARISON_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD'))\n"
+			+ "PIVOT ( COUNT(COMPARISON_STATUS) FOR COMPARISON_STATUS IN ('SUCCESS' SUCCESS,'FAILURE' FAILURE))";
+
+	public static final String DAILY_ANALYSIS_API_COMPARE = "SELECT * FROM ( SELECT API_TYPE, COMAPRISON_STATUS FROM API_PAYLOAD_COMP_RSLTS WHERE ORDER_NO IN (:ord_no) AND LOCATION_CODE IN (:loc_code) AND TRUNC(VZWDB_CREATE_TIMESTAMP) = TO_DATE('2022-SEP-27','YYYY-MM-DD')) PIVOT ( COUNT(COMAPRISON_STATUS) FOR COMAPRISON_STATUS IN ('SUCCESS' SUCCESS,'FAILED' FAILED))";
+
+	@PostConstruct
+	public void setQueries() {
+		queryMap.put("dataSync", DAILY_ANALYSIS_DATA_SYNC);
+		queryMap.put("dataCompare", DAILY_ANALYSIS_DATA_COMPARE);
+		queryMap.put("apiCompare", DAILY_ANALYSIS_API_COMPARE);
+		queryMap.put("query4", DAILY_ANALYSIS_API_COMPARE);
+	}
+
+	public Map<String, List<String>> getResults1(String type, List<String> locationCode, List<String> areaCode)
+			throws JsonProcessingException {
+		Map<String, List<String>> output = new LinkedHashMap<>();
+		Map<String, String> queryMap = new LinkedHashMap<>();
+		queryMap.put("dataSync", DAILY_ANALYSIS_DATA_SYNC);
+		queryMap.put("dataCompare", DAILY_ANALYSIS_DATA_COMPARE);
+		queryMap.put("apiCompare", DAILY_ANALYSIS_API_COMPARE);
+		queryMap.entrySet().parallelStream().forEach(x -> {
+			List<String> val = new ArrayList<>();
+			getDataSync5gReport(x.getValue(), locationCode, areaCode).subscribe(y -> val.addAll(y));
+			output.put(x.getKey(), val);
+		});
+		return output;
+	}
+	
+	
+	public Mono<List<String>> getDataSync5gReport(String Query,List<String> ord, List<String> loc) {
+	    Map<String, Object> namedParams = new HashMap<>();
+	    namedParams.put("ord_no", ord);
+	    namedParams.put("loc_code", loc);
+	   try {
+		return getResultsNewer(Query, ord, loc);
+	} catch (JsonProcessingException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+		//return null;
+	return null;
+
+	}
+
+	public Mono<Map<String, List<String>>> getResultsNew(String clientId, List<String> list, List<String> list2)
+			throws JsonProcessingException {
+		Map<String, List<String>> output = new LinkedHashMap<>();
+		List<String> dataSyncList = new ArrayList<>();
+		Result dataSyncRecord = new Result("5g", "DMS_EnforceCallBackInsert", 3, 0, 0);
+		ObjectMapper mapper = new ObjectMapper();
+		String result1 = mapper.writeValueAsString(dataSyncRecord);
+		dataSyncList.add(result1);
+		output.put("dataSync", dataSyncList);
+		// --- data compare
+		List<String> dataCompareList = new ArrayList<>();
+		ResultData dataCompareRecord = new ResultData("5g", "DMS_SkusAndRdbUpdate", 1, 1);
+		String result2 = mapper.writeValueAsString(dataCompareRecord);
+		dataCompareList.add(result2);
+		output.put("dataCompare", dataCompareList);
+		// --- api compare
+		List<String> apiCompareList = new ArrayList<>();
+		ResultAPI apiCompareRecord = new ResultAPI("5g", "ENFORCE_FILL_ORDER", 2, 0);
+		String result3 = mapper.writeValueAsString(apiCompareRecord);
+		apiCompareList.add(result3);
+		output.put("apiCompare", apiCompareList);
+		return Mono.just(output);
+	}
+	
+	
+	//changes
+	
+	public Mono<List<String>> getResultsNewer(String clientId, List<String> list, List<String> list2)
+			throws JsonProcessingException {
+		List<String> dataSyncList = new ArrayList<>();
+		Result dataSyncRecord = new Result("5g", "DMS_EnforceCallBackInsert", 3, 0, 0);
+		ObjectMapper mapper = new ObjectMapper();
+		String result1 = mapper.writeValueAsString(dataSyncRecord);
+		dataSyncList.add(result1);
+		
+		return Mono.just(dataSyncList);
+	}
+}
