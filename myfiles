@@ -25,7 +25,7 @@ public class RestControllers {
 	
 	@GetMapping("/rest")
 	public String getHtml(ModelMap madelMap) throws IOException, TemplateException {
-		  Template t = config.getTemplate("sample.ftl");   
+		 
 		  String jsonString="{\r\n"
 	    			+ "    \"meta\": {\r\n"
 	    			+ "        \"timestamp\": \"2022-10-26T06:09:53Z\",\r\n"
@@ -324,6 +324,9 @@ public class RestControllers {
 	    			+ "    }\r\n"
 	    			+ "}";
 		  madelMap.put("summary",convertJsontoSummary(jsonString));
+		  madelMap.put("datasync",convertJsontodataSync(jsonString));
+		  madelMap.put("datacompare", convertJsontodataCompare(jsonString));
+		  Template t = config.getTemplate("sample.ftl");   
 	         String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, madelMap);  
 		return html;
 	}
@@ -361,5 +364,19 @@ public class RestControllers {
 	    }
 	
 
-	
+	  public List<Object> convertJsontodataSync(String jsonString){
+	    	JSONObject jsonObject = new JSONObject(jsonString);
+	    	JSONArray dataObject =jsonObject.getJSONObject("data").getJSONArray("dataSync");
+	    
+	    	return dataObject.toList();
+	 
+	    }
+	  
+	  public List<Object> convertJsontodataCompare(String jsonString){
+	    	JSONObject jsonObject = new JSONObject(jsonString);
+	    	JSONArray dataObject =jsonObject.getJSONObject("data").getJSONArray("dataCompare");
+	    
+	    	return dataObject.toList();
+	 
+	    }
 }
