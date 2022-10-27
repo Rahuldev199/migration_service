@@ -2,7 +2,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Diwali Greeting</title>
+    <title>Email Template</title>
 </head>
 <style>
     th {
@@ -70,6 +70,54 @@
                                     </#list>
 
                                 </table>
+                            </div>
+                            <div style="font-size: 24px; 
+                            margin-top: 20px;">
+                                <b>DATA SYNC</b><br /><br />
+                            </div>
+                            <div style="text-align:left">
+
+                                <table style="background-color: black;">
+                                    <tr style="background-color: #3a80e2f9;">
+                                        <th>Flow Types</th>
+                                        <th>TYPE_DEF_NAME</th>
+                                        <th>SUCCESS</th>
+                                        <th>FAILURE</th>
+                                        <th>INPROCESSING</th>
+                                    </tr>
+                                    <#list datasync as item>
+                                        <tr style="background-color: #ffffff;">
+                                            <td>${item.Flow_Type}</td>
+                                            <td>${item.type_def_name}</td>
+                                            <td>${item.success}</td>
+                                            <td>${item.failure}</td>
+                                            <td>${item.in_processing}</td>
+                                        </tr>
+                                    </#list>
+
+                                </table>
+                            </div>
+                            <div style="font-size: 24px; 
+                            margin-top: 20px;">
+                                <b>DATA SYNC</b><br /><br />
+                            </div>
+                            <div style="text-align:left">
+                                <table style="background-color: black;">
+                                    <tr style="background-color: #3a80e2f9;">
+                                        <th>Flow Types</th>
+                                        <th>MILESTONE</th>
+                                        <th>SUCCESS</th>
+                                        <th>FAILURE</th>
+                                    </tr>
+                                    <#list datacompare as item>
+                                        <tr style="background-color: #ffffff;">
+                                            <td>${item.Flow_Type}</td>
+                                            <td>${item.milestones}</td>
+                                            <td>${item.success}</td>
+                                            <td>${item.failure}</td>
+
+                                        </tr>
+                                    </#list>
                             </div>
                         </td>
                     </tr>
