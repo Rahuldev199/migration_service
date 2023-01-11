@@ -21,20 +21,13 @@
                                         <th>Flow Types</th>
                                         <th>ORDER COUNT</th>
                                     </tr>
-                                    <#list ordercount as item>
-                                        <tr>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${(item.flowtype)!"-"}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${(item.ordercount)!"-"}</td>
-                                        </tr>
-                                        <#else>
-                                            <tr>
+                                                                                <tr>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
 
                                             </tr>
-                                    </#list>
                                 </table>
                             </div>
                             <div style="font-weight: 200;font-size: 14pt;padding-bottom: 5px;padding-top: 25px;text-transform: uppercase;">
@@ -58,31 +51,26 @@
                                         <th>SUCCESS</th>
                                         <th>FAILURE</th>
                                     </tr>
-                                    <#list summary as item>
                                         <tr>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.datasync_type?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.datasync_success?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.datasync_failure?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.datasync_inprocessing?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.datacompare_success?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.datacompare_failure?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.apicompare_success?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.apicompare_failure?if_exists}</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">1</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">1</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
                                         </tr>
-                                        <#else>
-                                            <tr>
-                                            	  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                            </tr>
-                                    </#list>
+                                        <tr>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;"></td>
+                                        </tr>
                                 </table>
                             
                             <div style="font-weight: 200;font-size: 14pt;padding-bottom: 5px;padding-top: 25px;text-transform: uppercase;">
@@ -96,22 +84,12 @@
                                         <th>SUCCESS</th>
                                         <th>FAILURE</th>
                                     </tr>
-                                    <#list datacompare as item>
                                         <tr>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.flowtype?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.milestones?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.success?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.failure?if_exists}</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">Others</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">SubmitPayment</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">1</td>
+                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">1</td>
                                         </tr>
-                                        <#else>
-                                            <tr>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-                                                  <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
-
-                                            </tr>
-                                    </#list>
                                 </table>
                             </div>
                             <div style="font-weight: 200;font-size: 14pt;padding-bottom: 5px;padding-top: 25px;text-transform: uppercase;">
@@ -125,21 +103,12 @@
                                         <th>SUCCESS</th>
                                         <th>FAILURE</th>
                                     </tr>
-                                    <#list apiCompare as item>
-                                        <tr>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.flowType?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.apiType?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.success?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.failure?if_exists}</td>
-                                        </tr>
-                                        <#else>
                                             <tr>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                             </tr>
-                                    </#list>
                                 </table>
                             </div>
                             
@@ -155,15 +124,6 @@
                                         <th>FAILURE</th>
                                         <th>INPROCESSING</th>
                                     </tr>
-                                    <#list datasync as item>
-                                        <tr>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.flowType?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.typedefname?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.success?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.failure?if_exists}</td>
-                                              <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">${item.inProgress?if_exists}</td>
-                                        </tr>
-                                        <#else>
                                             <tr>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
@@ -171,7 +131,6 @@
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                                   <td style="border: 1px solid #000000;padding: 5px 5px 5px 5px;">0</td>
                                             </tr>
-                                    </#list>
                                 </table>
                             </div>
                         </td>
@@ -183,3 +142,39 @@
 </body>
 
 </html>
+
+
+=============================
+
+public void dynamicSelectQuery(MigrationConfig.Config config, List<Query> queryList,
+                                   CXPRequest<DataSyncRequest> dataSyncRequest, Map<String, String> flattenPayload) throws ExecutionException, InterruptedException {
+        List<MigrationConfig.SelectQueryList> selectQueryLists = config.getDatasync().getSelectQueryList();
+        for (MigrationConfig.SelectQueryList selectQuery : selectQueryLists) {
+            MigrationConfig.QueryConfig queryConfig = new MigrationConfig.QueryConfig();
+            queryConfig.setQueryId(selectQuery.getQueryId());
+            queryConfig.setParams(selectQuery.getWhereParam());
+            String ProdParallelFlag = null;
+            if (StringUtils.isBlank(dataSyncRequest.getData().getProdParallelFlag())) {
+                ProdParallelFlag = migrationConfig.getProdParallelFlag();
+            } else {
+                ProdParallelFlag = dataSyncRequest.getData().getProdParallelFlag();
+            }
+            List<RequestQuery> requestQueryList  = new ArrayList<>();
+            if (ProdParallelFlag.equalsIgnoreCase("Y")) {
+                requestQueryList = GenerateJson.getJsonForSecondaryPOSDBQuery(queryConfig, flattenPayload);
+            } else if (ProdParallelFlag.equalsIgnoreCase("N")) {
+                List<ToolsRequestQuery> toolsRequestQueries = GenerateJson.getJsonForPrimaryPOSDBQuery(queryConfig, flattenPayload);
+                requestQueryList.addAll(toolsRequestQueries);
+            }
+            for(RequestQuery requestQuery : requestQueryList) {
+                ResponseResult resultResponse = queryService.executeQuery(requestQuery).toFuture().get();
+                if (resultResponse.getStatus().equals(DataSyncConstant.SUCCESS)) {
+                    JSONArray obj = new JSONArray(resultResponse.getPayload().toString());
+                    if (obj.length() != 0) {
+                        queryList.removeIf(query -> query.getQueryId().equals(selectQuery.getInsertQueryId()));
+                    } else {
+                        queryList.removeIf(query -> query.getQueryId().equals(selectQuery.getUpdateQueryId()));
+                    }
+                }
+            }
+        }
